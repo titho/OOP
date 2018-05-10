@@ -1,0 +1,306 @@
+#include <iostream>
+#include <cstring>
+using namespace std;
+
+struct HistoryEntry
+{
+	int month;
+	char* url;
+
+public:
+	HistoryEntry();
+	~HistoryEntry();
+	HistoryEntry& operator=(const HistoryEntry&);
+
+	int getMonth() const;
+	char * getUrl() const;
+
+	void setMonth(int);
+	void setUrl(const char*);
+
+	HistoryEntry(int, const char*);
+};
+class BrowserHistory
+{
+private: 
+	int N;
+	int count;
+	HistoryEntry * sites;
+
+	void resize()
+	{
+		HistoryEntry* tmp;
+		tmp = sites;
+		N *= 2;
+		sites = new HistoryEntry[N];
+
+		for (unsigned i = 0; i < count; i++)
+		{
+			sites[i] = tmp[i];
+		}
+		delete[] tmp;
+	}
+public:
+	BrowserHistory();
+	BrowserHistory(int);
+	BrowserHistory(const BrowserHistory &);
+	BrowserHistory& operator=(const BrowserHistory &);
+	~BrowserHistory();
+	
+	void addSite();
+	void addSite(const HistoryEntry&);
+	void print();
+
+	int findByMonth(int);
+	int findByRate();	
+	void remLastSite();
+
+	BrowserHistory& cat(const BrowserHistory &his1, const BrowserHistory &his2);
+};
+
+
+HistoryEntry::HistoryEntry(int _month, const char * _url)
+{
+	//	if (url) delete[] url;
+	url = new char[strlen(_url) + 1];
+	strcpy(url,  _url);
+	month = _month;
+}
+
+HistoryEntry::HistoryEntry()
+{
+}
+
+HistoryEntry::~HistoryEntry()
+{
+	delete[] url;
+}
+
+HistoryEntry & HistoryEntry::operator=(const HistoryEntry & his)
+{
+	if (this != &his)
+	{
+		delete[] url;
+		url = new char[strlen(his.url) + 1];
+		strcpy(url,  his.url);
+		month = his.month;
+	}
+	return *this;
+}
+
+BrowserHistory::BrowserHistory()
+{
+	N = 20;
+	sites = new HistoryEntry[N];
+	count = 0;
+}
+
+BrowserHistory::BrowserHistory(int _N)
+{
+	N = _N;
+	sites = new HistoryEntry[N];
+	count = 0;
+}
+
+BrowserHistory::BrowserHistory(const BrowserHistory & his)
+{
+	N = his.N;
+	count = his.count;
+	for (int i = 0; i < count; i++)
+	{
+		sites[i] = his.sites[i];
+	}
+}
+
+BrowserHistory& BrowserHistory::operator=(const BrowserHistory & his)
+{
+	if (this != &his)
+	{
+		N = his.N;
+		count = his.count;
+		for (int i = 0; i < count; i++)
+		{
+			sites[i] = his.sites[i];
+		}
+	}
+	return *this;
+}
+
+
+//
+BrowserHistory::~BrowserHistory()
+{
+	delete[] sites;
+}
+
+void BrowserHistory::addSite(const HistoryEntry & his)
+{
+	if (count <= N)
+	{
+		sites[count] = his;
+		count++;
+	}
+	else
+	{
+		cerr << "Error, its full!";
+	}
+}
+
+//Adds a site from the keyboard
+void BrowserHistory::addSite()
+{
+	
+	char * _url;
+	_url = new char[100];
+	cout << "Enter url: ";
+	cin.getline(_url, 100);
+	cout << "Enter month: ";
+	int n;
+	cin >> n;
+
+	HistoryEntry hs(n, _url);
+	sites[count] = hs;
+	count++;
+}
+
+//Prints
+void BrowserHistory::print()
+{
+	for (int i = 0; i < count; i++)
+	{
+		cout << sites[i].month<< " " << sites[i].url << endl;
+	}
+}
+
+//Finds by month
+int BrowserHistory::findByMonth(int n)
+{
+	int sum = 0;
+	for (int i = 0; i < count; i++)
+	{
+		if (sites[i].month == n)
+		{
+			sum++;
+		}
+	}
+	return sum;
+}
+
+BrowserHistory& BrowserHistory::cat(const BrowserHistory &his1, const BrowserHistory &his2) {
+        BrowserHistory* newBh = new BrowserHistory(N);
+        int N = his1.N + his2.N;
+        for (int i = 0; i < his1.count; i++)
+        {
+            HistoryEntry site_(his1.sites[i].month, his1.sites[i].url);
+            newBh->addSite(site_);
+        }
+        for (int i = 0; i < his2.count; i++)
+        {
+            HistoryEntry site_(his2.sites[i].month, his2.sites[i].url);
+            newBh->addSite(site_);
+        }
+        newBh->print();
+        return *newBh;
+    }
+
+//Concat. function
+/*BrowserHistory& BrowserHistory::operator+(const BrowserHistory& news)
+{
+	HistoryEntry* result;
+	int p;
+	p = count + news.count;
+	result = new HistoryEntry[p];
+	int count2;
+
+	for (count2 = 0; count2 < p; count2++)
+	{
+	    cout << "Adding " << sites[count2].url << endl;
+		result[count2] = sites[count2];
+	}
+
+	for (count2 = count; count2 < p; count2++)
+	{
+	    cout << "Adding " << news.sites[count2 - count].url << endl;
+		result[count2] = news.sites[count2 - count];
+	}
+
+	delete sites;
+	sites = result;
+	count = count + news.count;
+
+	return *this;
+}*/
+
+int BrowserHistory::findByRate()
+{
+	int max = 0;
+	int n;
+	for (int i = 1; i < 12; i++)
+	{
+		n = findByMonth(i); 
+		if (n > max)
+		{
+			max = n;
+		}
+	}
+	return max;
+}
+
+void BrowserHistory::remLastSite()
+{
+	sites[count].url = NULL;
+	sites[count].month = 0;
+	count--;
+}
+
+int HistoryEntry::getMonth() const
+{
+	return month;
+}
+
+char* HistoryEntry::getUrl() const
+{
+	return url;
+}
+
+void HistoryEntry::setMonth(int _month)
+{
+	month = _month;
+}
+
+void HistoryEntry::setUrl(const char * _url)
+{
+	delete[] url;
+	url = new char[strlen(_url) + 1];
+	strcpy(url,  _url);
+}
+
+int main()
+{
+	BrowserHistory his(10);
+	HistoryEntry a (4, "www.iamhere.com");
+	HistoryEntry b(4, "www.randomwebsite.net");
+	HistoryEntry c(2, "www.muchno.yes");
+	his.addSite(a);
+	his.addSite(b);
+	his.addSite(c);
+   
+	//his.print();
+	cout << endl;
+	
+	BrowserHistory his2(10);
+	HistoryEntry aa (3, "www.iamhere.com");
+	HistoryEntry bb(7, "www.randomwebsite.net");
+	HistoryEntry cc(4, "www.muchno.yes");
+    his2.addSite(aa);
+	his2.addSite(bb);
+	his2.addSite(cc);
+	
+	cout << endl;
+	
+	BrowserHistory his3 = his.cat(his,his2);
+	his3.print();
+	
+
+	return 0;
+}
